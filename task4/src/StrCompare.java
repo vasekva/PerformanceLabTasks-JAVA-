@@ -3,7 +3,6 @@ public class StrCompare {
 
     static boolean match(String first, String second)
     {
-
         // - // Если мы дойдем до конца обеих строк,
         // - // мы закончим
         if (first.length() == 0 && second.length() == 0)
@@ -42,19 +41,11 @@ public class StrCompare {
     }
 
     public static void main(String[] args) {
-//        if (args.length != 2) {
-//            System.out.println("Неверное кол-во входных аргументов!");
-//        } else {
-//            ft_compare(args[0], args[1]);
-        test("bicycle", "bic*le"); // Yes
-        test("iwantasummer", "i*ta*u*mer"); // Yes
-            test("bee", "b*k"); // No because 'k' is not in second
-            test("sqrt", "*sqr"); // No because 't' is not in first
-        test("abcdhghgbcd", "abc*bcd"); // Yes
-        test("abcb cd", "abc****************cd");
-        test("a", "*****************"); // Yes
-        test("abcd", "*c*d"); // Yes
-        test("abcd", "**c*d"); // Yes
-//        }
+
+        if (args.length == 2) {
+            test(args[0], args[1]);
+        } else {
+            System.out.println("usage");
+        }
     }
 }

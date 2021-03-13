@@ -1,4 +1,18 @@
 
+/**
+* метод мейн вызывает метод itoBase(long nb, String base) !!!В java нет unsigned int
+* из-за чего я сделал "псевдо-безнаковый" тип путем проверки входного значения
+* с помощью метода ft_check_value(long num), который выбрасывает исключение, если
+* значение меньше 0 или больше максимального безнакового инта
+*/
+
+/**
+* Метод itoBase(long nb, String base) пропускает дальше только 4 значения:
+* 1) ("01")               - ft_parse_binary(nb); - двоичное преобразование
+* 2) ("012")              - ft_parse_ternary(nb); - троичное преобразование
+* 3) ("01234567")         - ft_parse_octal(nb); - восьмеричное преобразование
+* 4) ("0123456789abcdef") - ft_parse_hexadecimal(nb); - шестнадцатеричное преобразование
+*/
 
 public class FirstTask {
 
@@ -85,13 +99,13 @@ public class FirstTask {
 
     public static void      main(String[] args) {
 
-        long number = 4294967295L;
+        long number;
 
-        System.out.println(itoBase(number, "01"));
-        System.out.println(itoBase(number, "012"));
-        System.out.println(itoBase(number, "01234567"));
-        System.out.println(itoBase(number, "0123456789abcdef"));
-        System.out.println(itoBase(number, "0123456789abcdedff"));
-
+        if (args.length == 2) {
+            number = Long.parseLong(args[0]);
+            System.out.println(itoBase(number, args[1]));
+        } else {
+            System.out.println("usage");
+        }
     }
 }

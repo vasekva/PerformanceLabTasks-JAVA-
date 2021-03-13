@@ -1,57 +1,205 @@
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/*
+ * Тестовые варианты конфигов на парсинг:
+ *   {sphere: {center: [0, 0, 0], radius: 10.67}, line: {[1, 0.5, 15], [43, -14.6, 0.04]}}
+ *   {sphere: {radius: 10.67, center: [0, 0, 0]}, line: {[1, 0.5, 15], [43, -14.6, 0.04]}}
+ *   {line: {[1, 0.5, 15], [43, -14.6, 0.04], sphere: {radius: 10.67, center: [0, 0, 0]}}}
+ *   {sphere: {radius: 10.67, center: [0, 0, 0]}, line: {[43, -14.6, 0.04], [1, 0.5, 15]}}
+ *   {line: {[43, -14.6, 0.04], [1, 0.5, 15], sphere: {radius: 10.67, center: [0, 0, 0]}}}
+ */
 
 public class Collision {
 
-    private static void check_collisions(double[] coordA, double[] coordB, double[] coordC, double R) {
-        double Ax = coordA[0], Bx = coordB[0], Cx = coordC[0];
-        double Ay = coordA[1], By = coordB[1], Cy = coordC[1];
+    private static double[] ft_parse_sphere(String str) {
+        double[] coordsC;
 
-        // Вычисляем евклидово расстояние между A & B
-        double LAB = Math.sqrt(Math.pow(Bx - Ax, 2) + Math.pow(By - Ay, 2));
-        System.out.println("LAB: " + LAB);
-        // Вычисляем вектор направления D от A до B
-        double Dx = (Bx - Ax) / LAB;
-        double Dy = (By - Ay) / LAB;
-        System.out.println("Dx && Dy: " + Dx + " " + Dy);
-        // Вычисляем расстояние между точками A и E, где E - точка AB, ближайшая к центру окружности (Cx, Cy)
-        double t = Dx * (Cx - Ax) + Dy * (Cy - Ay);
+        // Вытаскиваем из строки значения отвечающее за сферу
 
-        // Вычисляем координаты точки E
-        double Ex = t * Dx + Ax;
-        double Ey = t * Dy + Ay;
-        System.out.println("Ex && Ey: " + Ex + " " + Ey);
-        // Вычисляем евклидово расстояние между E и C
-        double LEC = Math.sqrt(Math.pow(Ex - Cx, 2) + Math.pow(Ey - Cy, 2));
-        System.out.println("LEC: " + LEC);
-        // Проверяем пересекла ли линия круг
-        if (LEC < R) {
-            // Вычисляем расстояние от t до точки пересечения окружности
-            double dt = Math.sqrt(Math.pow(R, 2) - Math.pow(LEC, 2));
+        Pattern pattern = Pattern.compile("sphere: \\{.*?\\}");
+        Matcher matcher = pattern.matcher(str);
 
-            // Вычисляем первую точку пересечения
-            double Fx = (t - dt) * Dx + Ax;
-            double Fy = (t - dt) * Dy + Ay;
-
-            // Вычилсяем вторую точку пересечения
-            double Gx = (t + dt) * Dx + Ax;
-            double Gy = (t + dt) * Dy + Ay;
-            System.out.printf("Points of intersections: (%f %f) (%f %f)", Fx, Fy, Gx, Gy);
+        String sphere = "";
+        while (matcher.find()) {
+            sphere = str.substring(matcher.start(), matcher.end());
         }
-        else if (LEC == R) {
-            System.out.println("Косание");
-        }
-        else
-        {
-            System.out.println("Nope");
+        sphere = sphere.replaceAll("sphere: |\\{|\\}", "");
+
+        // Вытаскиваем из строки значение отвечающее за координаты центра окружности
+
+        pattern = Pattern.compile("\\[.*\\]");
+        matcher = pattern.matcher(sphere);
+        String coord = "";
+        while (matcher.find()) {
+            coord = sphere.substring(matcher.start(), matcher.end());
         }
 
+        coord = coord.replaceAll("\\[|\\]|\\s", "");
+        coordsC = Arrays.asList(coord.split(",")).stream().mapToDouble(Double::parseDouble).toArray();
+
+        return coordsC;
+    }
+
+    private static double ft_parse_radius(String str) {
+        double radius;
+
+        Pattern pattern = Pattern.compile("sphere: \\{.*?\\}");
+        Matcher matcher = pattern.matcher(str);
+
+        String sphere = "";
+        while (matcher.find()) {
+            sphere = str.substring(matcher.start(), matcher.end());
+        }
+        sphere = sphere.replaceAll("sphere: |\\{|\\}", "");
+
+        // Получаем значение радиуса из строки параметров сферы
+
+        pattern = Pattern.compile("radius: .+?,|radius: .+?}");
+        matcher = pattern.matcher(str);
+        String radius_str = "";
+        while (matcher.find()) {
+            radius_str = str.substring(matcher.start(), matcher.end());
+        }
+        radius_str = radius_str.replaceAll("radius: |}|,", "");
+        radius = Double.parseDouble(radius_str);
+        return radius;
+    }
+
+
+    private static double[] ft_parse_A(String str) {
+        double[] coordsA = new double[3];
+
+        Pattern pattern = Pattern.compile("line: .+?]}");
+        Matcher matcher = pattern.matcher(str);
+        String line = "";
+        while (matcher.find()) {
+            line = str.substring(matcher.start(), matcher.end());
+        }
+        line = line.replaceAll("line: |}|\\{", "");
+
+        // Вытаскиваем из строки line две последовательности координат(точек отрезка) в массив
+
+        pattern = Pattern.compile("\\[.+?\\]");
+        matcher = pattern.matcher(line);
+        int i = 0;
+        while (matcher.find()) {
+            str = line.substring(matcher.start(), matcher.end()).replaceAll(" |\\[|\\]", "");
+            if (i == 0)
+                coordsA = Arrays.asList(str.split(",")).stream().mapToDouble(Double::parseDouble).toArray();
+            i++;
+        }
+        return coordsA;
+    }
+
+    private static double[] ft_parse_B(String str) {
+        double[] coordsB = new double[3];
+
+        Pattern pattern = Pattern.compile("line: .+?]}");
+        Matcher matcher = pattern.matcher(str);
+        String line = "";
+        while (matcher.find()) {
+            line = str.substring(matcher.start(), matcher.end());
+        }
+        line = line.replaceAll("line: |}|\\{", "");
+
+        // Вытаскиваем из строки line две последовательности координат(точек отрезка) в массив
+
+        pattern = Pattern.compile("\\[.+?\\]");
+        matcher = pattern.matcher(line);
+        int i = 0;
+        while (matcher.find()) {
+            str = line.substring(matcher.start(), matcher.end()).replaceAll(" |\\[|\\]", "");
+            if (i == 1)
+                coordsB = Arrays.asList(str.split(",")).stream().mapToDouble(Double::parseDouble).toArray();
+            i++;
+        }
+        return coordsB;
+    }
+
+    public static void check_collisions3D(double[] linePoint0, double[] linePoint1, double[] circleCenter, double circleRadius)
+    {
+        double cx = circleCenter[0];
+        double cy = circleCenter[1];
+        double cz = circleCenter[2];
+
+        double px = linePoint0[0];
+        double py = linePoint0[1];
+        double pz = linePoint0[2];
+
+        double vx = linePoint1[0] - px;
+        double vy = linePoint1[1] - py;
+        double vz = linePoint1[2] - pz;
+
+        double A = vx * vx + vy * vy + vz * vz;
+        double B = 2.0 * (px * vx + py * vy + pz * vz - vx * cx - vy * cy - vz * cz);
+        double C = px * px - 2 * px * cx + cx * cx + py * py - 2 * py * cy + cy * cy +
+                pz * pz - 2 * pz * cz + cz * cz - circleRadius * circleRadius;
+
+        // discriminant
+        double D = B * B - 4 * A * C;
+
+        double t1 = (-B - Math.sqrt(D)) / (2.0 * A);
+
+        double[] solution1 = {
+                linePoint0[0] * (1 - t1) + t1 * linePoint1[0],
+                linePoint0[1] * (1 - t1) + t1 * linePoint1[1],
+                linePoint0[2] * (1 - t1) + t1 * linePoint1[2]
+        };
+
+        double t2 = (-B + Math.sqrt(D)) / (2.0 * A);
+        double[] solution2 = {
+                linePoint0[0] * (1 - t2) + t2 * linePoint1[0],
+                linePoint0[1] * (1 - t2) + t2 * linePoint1[1],
+                linePoint0[2] * (1 - t2) + t2 * linePoint1[2]
+        };
+
+        if (D < 0 || t1 > 1 || t2 >1) {
+            System.out.println("Коллизий не найдено");
+        } else if (D == 0)  {
+            System.out.println(solution1);
+        } else {
+            for (double one : solution1) {
+                System.out.print(one + " ");
+            }
+            System.out.println();
+            for (double two : solution2) {
+                System.out.print(two + " ");
+            }
+            System.out.println();
+        }
     }
 
     public static void main(String[] args) {
-        double[] coordsA = {-2, -2};
-        double[] coordsB = {8, -2};
-        double[] coordsC = {4, -2};
-        double R = 2.0;
+        double[]    coordsA;
+        double[]    coordsB;
+        double[]    coordsC;
+        double      R;
 
-        check_collisions(coordsA, coordsB, coordsC, R);
+        String str = "";
+        if (args.length == 1) {
+            try(
+                    FileReader reader = new FileReader(args[0]);
+                    Scanner scanner = new Scanner(reader);
+                ) {
+                if (scanner.hasNextLine()) {
+                    str = scanner.nextLine();
+                }
+                coordsC = ft_parse_sphere(str);
+                coordsA = ft_parse_A(str);
+                coordsB = ft_parse_B(str);
+                R = ft_parse_radius(str);
+
+                check_collisions3D(coordsA, coordsB, coordsC, R);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Неверное кол-во аргументов!");
+        }
     }
 }
