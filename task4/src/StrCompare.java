@@ -46,14 +46,13 @@ public class StrCompare {
 //            System.out.println("Неверное кол-во входных аргументов!");
 //        } else {
 //            ft_compare(args[0], args[1]);
-        test("geeks", "g*ks"); // Yes
-        test("geeksforgeeks", "ge*ks*"); // Yes
-            test("gee", "g*k"); // No because 'k' is not in second
-            test("pqrst", "*pqrs"); // No because 't' is not in first
+        test("bicycle", "bic*le"); // Yes
+        test("iwantasummer", "i*ta*u*mer"); // Yes
+            test("bee", "b*k"); // No because 'k' is not in second
+            test("sqrt", "*sqr"); // No because 't' is not in first
         test("abcdhghgbcd", "abc*bcd"); // Yes
         test("abcb cd", "abc****************cd");
-        test("a", "*****************"); // No because second must have 2
-        // instances of 'c'
+        test("a", "*****************"); // Yes
         test("abcd", "*c*d"); // Yes
         test("abcd", "**c*d"); // Yes
 //        }
